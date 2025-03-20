@@ -7,6 +7,7 @@ from langchain_core.documents import Document
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
+# Update this with the model you would like to use
 model = "CodeLlama:7b"
 
 pdf_files: list[str] = [f for f in os.listdir(path="./data") if f.endswith(".pdf")]
@@ -99,6 +100,7 @@ pprint.pprint(object=f"metadata text chunks: {metadata_text_chunks}")
 
 
 # === Create Embedding from Text Chunks ===
+# Change this model if you would like to use a different embedding model
 ollama.pull(model="nomic-embed-text")
 
 
@@ -211,6 +213,7 @@ load_dotenv()
 
 text_response: str = response
 
+# Add ELEVENLABS_API_KEY env var with your elevelabs api key
 api_key: str | None = os.getenv(key="ELEVENLABS_API_KEY")
 
 # Generate the audio stream

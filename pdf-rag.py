@@ -1,27 +1,29 @@
-## 1. Ingest PDF Files
+# 1. Ingest PDF Files
 # 2. Extract Text from PDF Files and split into small chunks
 # 3. Send the chunks to the embedding model
 # 4. Save the embeddings to a vector database
 # 5. Perform similarity search on the vector database to find similar documents
 # 6. retrieve the similar documents and present them to the user
-## run pip install -r requirements.txt to install the required packages
+# run `poetry add $(cat requirements.txt)` to install the required packages
+
+from typing import Any, List
 
 from langchain_community.document_loaders import UnstructuredPDFLoader
-from langchain_community.document_loaders import OnlinePDFLoader
+from langchain_core.documents.base import Document
 
-doc_path = "./data/BOI.pdf"
-model = "llama3.2"
+doc_path: str = "./data/BOI.pdf"
+model: str = "CodeLlama:7b"
 
 # Local PDF file uploads
 if doc_path:
-    loader = UnstructuredPDFLoader(file_path=doc_path)
-    data = loader.load()
+    loader: UnstructuredPDFLoader = UnstructuredPDFLoader(file_path=doc_path)
+    data: list[Document] = loader.load()
     print("done loading....")
 else:
     print("Upload a PDF file")
 
     # Preview first page
-content = data[0].page_content
+content: str = data[0].page_content
 # print(content[:100])
 
 
@@ -30,13 +32,16 @@ content = data[0].page_content
 
 # ==== Extract Text from PDF Files and Split into Small Chunks ====
 
+from langchain_community.vectorstores import Chroma
 from langchain_ollama import OllamaEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_community.vectorstores import Chroma
 
 # Split and chunk
-text_splitter = RecursiveCharacterTextSplitter(chunk_size=1200, chunk_overlap=300)
-chunks = text_splitter.split_documents(data)
+text_splitter: RecursiveCharacterTextSplitter = RecursiveCharacterTextSplitter(
+    chunk_size=1200,
+    chunk_overlap=300,
+)
+chunks: List[Document] = text_splitter.split_documents(documents=data)
 print("done splitting....")
 
 # print(f"Number of chunks: {len(chunks)}")
@@ -45,9 +50,9 @@ print("done splitting....")
 # ===== Add to vector database ===
 import ollama
 
-ollama.pull("nomic-embed-text")
+ollama.pull(model="nomic-embed-text")
 
-vector_db = Chroma.from_documents(
+vector_db: Chroma = Chroma.from_documents(
     documents=chunks,
     embedding=OllamaEmbeddings(model="nomic-embed-text"),
     collection_name="simple-rag",
@@ -57,19 +62,17 @@ print("done adding to vector database....")
 
 ## === Retrieval ===
 from langchain.prompts import ChatPromptTemplate, PromptTemplate
+from langchain.retrievers.multi_query import MultiQueryRetriever
 from langchain_core.output_parsers import StrOutputParser
-
+from langchain_core.runnables import RunnablePassthrough, RunnableSequence
 from langchain_ollama import ChatOllama
 
-from langchain_core.runnables import RunnablePassthrough
-from langchain.retrievers.multi_query import MultiQueryRetriever
-
 # set up our model to use
-llm = ChatOllama(model=model)
+llm: ChatOllama = ChatOllama(model=model)
 
 # a simple technique to generate multiple questions from a single question and then retrieve documents
 # based on those questions, getting the best of both worlds.
-QUERY_PROMPT = PromptTemplate(
+QUERY_PROMPT: PromptTemplate = PromptTemplate(
     input_variables=["question"],
     template="""You are an AI language model assistant. Your task is to generate five
     different versions of the given user question to retrieve relevant documents from
@@ -79,21 +82,23 @@ QUERY_PROMPT = PromptTemplate(
     Original question: {question}""",
 )
 
-retriever = MultiQueryRetriever.from_llm(
-    vector_db.as_retriever(), llm, prompt=QUERY_PROMPT
+retriever: MultiQueryRetriever = MultiQueryRetriever.from_llm(
+    retriever=vector_db.as_retriever(), llm=llm, prompt=QUERY_PROMPT
 )
 
 
 # RAG prompt
-template = """Answer the question based ONLY on the following context:
+template: str = """Answer the question based ONLY on the following context:
 {context}
 Question: {question}
 """
 
-prompt = ChatPromptTemplate.from_template(template)
+prompt: ChatPromptTemplate = ChatPromptTemplate.from_template(
+    template=template,
+)
 
 
-chain = (
+chain: RunnableSequence[dict[str, Any], str] = (
     {"context": retriever, "question": RunnablePassthrough()}
     | prompt
     | llm
@@ -105,6 +110,6 @@ chain = (
 # res = chain.invoke(
 #     input=("what are the main points as a business owner I should be aware of?",)
 # )
-res = chain.invoke(input=("how to report BOI?",))
+res: str = chain.invoke(input=("how to report BOI?",))
 
 print(res)

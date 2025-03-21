@@ -1,89 +1,98 @@
 # app.py
+# To run this use the command `streamlit run pdf-rag-streamlit.py`
 
-import streamlit as st
-import os
 import logging
-from langchain_community.document_loaders import UnstructuredPDFLoader
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_community.vectorstores import Chroma
-from langchain_ollama import OllamaEmbeddings
-from langchain.prompts import ChatPromptTemplate, PromptTemplate
-from langchain_ollama import ChatOllama
-from langchain_core.output_parsers import StrOutputParser
-from langchain_core.runnables import RunnablePassthrough
-from langchain.retrievers.multi_query import MultiQueryRetriever
+import os
+from typing import Any, List
+
 import ollama
+import streamlit as st
+from langchain.prompts import ChatPromptTemplate, PromptTemplate
+from langchain.retrievers.multi_query import MultiQueryRetriever
+from langchain_community.document_loaders import UnstructuredPDFLoader
+from langchain_community.vectorstores import Chroma
+from langchain_core.documents.base import Document
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.runnables import RunnablePassthrough, RunnableSequence
+from langchain_ollama import ChatOllama, OllamaEmbeddings
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 
 # Constants
-DOC_PATH = "./data/BOI.pdf"
-MODEL_NAME = "llama3.2"
-EMBEDDING_MODEL = "nomic-embed-text"
-VECTOR_STORE_NAME = "simple-rag"
-PERSIST_DIRECTORY = "./chroma_db"
+DOC_PATH: str = "./data/BOI.pdf"
+MODEL_NAME: str = "CodeLlama:7b"
+EMBEDDING_MODEL: str = "nomic-embed-text"
+VECTOR_STORE_NAME: str = "simple-rag"
+PERSIST_DIRECTORY: str = "./chroma_db"
 
 
-def ingest_pdf(doc_path):
+def ingest_pdf(doc_path: str) -> list[Document] | None:
     """Load PDF documents."""
-    if os.path.exists(doc_path):
+    if os.path.exists(path=doc_path):
         loader = UnstructuredPDFLoader(file_path=doc_path)
-        data = loader.load()
-        logging.info("PDF loaded successfully.")
+        data: list[Document] = loader.load()
+        logging.info(msg="PDF loaded successfully.")
         return data
     else:
-        logging.error(f"PDF file not found at path: {doc_path}")
-        st.error("PDF file not found.")
+        logging.error(msg=f"PDF file not found at path: {doc_path}")
+        st.error(body="PDF file not found.")
         return None
 
 
-def split_documents(documents):
+def split_documents(documents: list[Document]) -> list[Document]:
     """Split documents into smaller chunks."""
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1200, chunk_overlap=300)
-    chunks = text_splitter.split_documents(documents)
-    logging.info("Documents split into chunks.")
+    text_splitter: RecursiveCharacterTextSplitter = RecursiveCharacterTextSplitter(
+        chunk_size=1200,
+        chunk_overlap=300,
+    )
+    chunks: List[Document] = text_splitter.split_documents(documents=documents)
+    logging.info(msg="Documents split into chunks.")
     return chunks
 
 
 @st.cache_resource
-def load_vector_db():
+def load_vector_db() -> None | Chroma:
     """Load or create the vector database."""
     # Pull the embedding model if not already available
-    ollama.pull(EMBEDDING_MODEL)
+    ollama.pull(model=EMBEDDING_MODEL)
 
-    embedding = OllamaEmbeddings(model=EMBEDDING_MODEL)
+    embedding: OllamaEmbeddings = OllamaEmbeddings(model=EMBEDDING_MODEL)
 
-    if os.path.exists(PERSIST_DIRECTORY):
+    if os.path.exists(path=PERSIST_DIRECTORY):
         vector_db = Chroma(
             embedding_function=embedding,
             collection_name=VECTOR_STORE_NAME,
             persist_directory=PERSIST_DIRECTORY,
         )
-        logging.info("Loaded existing vector database.")
+        logging.info(msg="Loaded existing vector database.")
     else:
         # Load and process the PDF document
-        data = ingest_pdf(DOC_PATH)
+        data: list[Document] | None = ingest_pdf(doc_path=DOC_PATH)
         if data is None:
             return None
 
         # Split the documents into chunks
-        chunks = split_documents(data)
+        chunks: list[Document] = split_documents(documents=data)
 
-        vector_db = Chroma.from_documents(
+        vector_db: Chroma = Chroma.from_documents(
             documents=chunks,
             embedding=embedding,
             collection_name=VECTOR_STORE_NAME,
             persist_directory=PERSIST_DIRECTORY,
         )
         vector_db.persist()
-        logging.info("Vector database created and persisted.")
+        logging.info(msg="Vector database created and persisted.")
     return vector_db
 
 
-def create_retriever(vector_db, llm):
+def create_retriever(
+    vector_db: Chroma,
+    llm: ChatOllama,
+) -> MultiQueryRetriever:
     """Create a multi-query retriever."""
-    QUERY_PROMPT = PromptTemplate(
+    QUERY_PROMPT: PromptTemplate = PromptTemplate(
         input_variables=["question"],
         template="""You are an AI language model assistant. Your task is to generate five
 different versions of the given user question to retrieve relevant documents from
@@ -93,67 +102,78 @@ similarity search. Provide these alternative questions separated by newlines.
 Original question: {question}""",
     )
 
-    retriever = MultiQueryRetriever.from_llm(
-        vector_db.as_retriever(), llm, prompt=QUERY_PROMPT
+    retriever: MultiQueryRetriever = MultiQueryRetriever.from_llm(
+        retriever=vector_db.as_retriever(), llm=llm, prompt=QUERY_PROMPT
     )
-    logging.info("Retriever created.")
+    logging.info(msg="Retriever created.")
     return retriever
 
 
-def create_chain(retriever, llm):
+def create_chain(
+    retriever: MultiQueryRetriever,
+    llm: ChatOllama,
+) -> RunnableSequence[dict[str, Any], str]:
     """Create the chain with preserved syntax."""
     # RAG prompt
-    template = """Answer the question based ONLY on the following context:
+    template: str = """Answer the question based ONLY on the following context:
 {context}
 Question: {question}
 """
 
-    prompt = ChatPromptTemplate.from_template(template)
+    prompt: ChatPromptTemplate = ChatPromptTemplate.from_template(
+        template=template,
+    )
 
-    chain = (
+    chain: RunnableSequence[dict[str, Any], str] = (
         {"context": retriever, "question": RunnablePassthrough()}
         | prompt
         | llm
         | StrOutputParser()
     )
 
-    logging.info("Chain created with preserved syntax.")
+    logging.info(msg="Chain created with preserved syntax.")
     return chain
 
 
-def main():
-    st.title("Document Assistant")
+def main() -> None:
+    st.title(body="Document Assistant")
 
     # User input
-    user_input = st.text_input("Enter your question:", "")
+    user_input: str = st.text_input(label="Enter your question:", value="")
 
     if user_input:
-        with st.spinner("Generating response..."):
+        with st.spinner(text="Generating response..."):
             try:
                 # Initialize the language model
-                llm = ChatOllama(model=MODEL_NAME)
+                llm: ChatOllama = ChatOllama(model=MODEL_NAME)
 
                 # Load the vector database
-                vector_db = load_vector_db()
+                vector_db: None | Chroma = load_vector_db()
                 if vector_db is None:
-                    st.error("Failed to load or create the vector database.")
+                    st.error(body="Failed to load or create the vector database.")
                     return
 
                 # Create the retriever
-                retriever = create_retriever(vector_db, llm)
+                retriever: MultiQueryRetriever = create_retriever(
+                    vector_db=vector_db,
+                    llm=llm,
+                )
 
                 # Create the chain
-                chain = create_chain(retriever, llm)
+                chain: RunnableSequence[dict[str, Any], str] = create_chain(
+                    retriever=retriever,
+                    llm=llm,
+                )
 
                 # Get the response
-                response = chain.invoke(input=user_input)
+                response: str = chain.invoke(input=user_input)
 
-                st.markdown("**Assistant:**")
+                st.markdown(body="**Assistant:**")
                 st.write(response)
             except Exception as e:
-                st.error(f"An error occurred: {str(e)}")
+                st.error(body=f"An error occurred: {str(object=e)}")
     else:
-        st.info("Please enter a question to get started.")
+        st.info(body="Please enter a question to get started.")
 
 
 if __name__ == "__main__":

@@ -1,4 +1,4 @@
-FROM llama3.2
+FROM CodeLlama:7b
 
 # set the temperature to 1 [higher is more creative, lower is more coherent]
 PARAMETER temperature 0.3

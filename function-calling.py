@@ -1,41 +1,45 @@
-import os
-import json
 import asyncio
+import json
+import os
 import random
-from ollama import AsyncClient
+from typing import Any
+
+from ollama import AsyncClient, ChatResponse
+
+model: str = "CodeLlama:7b"
 
 
 # Load the grocery list from a text file
-def load_grocery_list(file_path):
-    if not os.path.exists(file_path):
+def load_grocery_list(file_path: str) -> list[None] | list[str]:
+    if not os.path.exists(path=file_path):
         print(f"File {file_path} does not exist.")
         return []
-    with open(file_path, "r") as file:
-        items = [line.strip() for line in file if line.strip()]
+    with open(file=file_path, mode="r", encoding="utf-8") as file:
+        items: list[str] = [line.strip() for line in file if line.strip()]
     return items
 
 
 # Function to fetch price and nutrition data for an item
-async def fetch_price_and_nutrition(item):
+async def fetch_price_and_nutrition(item: str) -> dict[str, str]:
     print(f"Fetching price and nutrition data for '{item}'...")
     # Replace with actual API calls
     # For demonstration, we'll return mock data
-    await asyncio.sleep(0.1)  # Simulate network delay
+    await asyncio.sleep(delay=0.1)  # Simulate network delay
     return {
         "item": item,
-        "price": f"${random.uniform(1, 10):.2f}",
-        "calories": f"{random.randint(50, 500)} kcal",
-        "fat": f"{random.randint(1, 20)} g",
-        "protein": f"{random.randint(1, 30)} g",
+        "price": f"${random.uniform(a=1, b=10):.2f}",
+        "calories": f"{random.randint(a=50, b=500)} kcal",
+        "fat": f"{random.randint(a=1, b=20)} g",
+        "protein": f"{random.randint(a=1, b=30)} g",
     }
 
 
 # Function to fetch a recipe based on a category
-async def fetch_recipe(category):
+async def fetch_recipe(category: str) -> dict[str, str | list[str]]:
     print(f"Fetching a recipe for the '{category}' category...")
     # Replace with actual API calls to a recipe site
     # For demonstration, we'll return mock data
-    await asyncio.sleep(0.1)  # Simulate network delay
+    await asyncio.sleep(delay=0.1)  # Simulate network delay
     return {
         "category": category,
         "recipe": f"Delicious {category} dish",
@@ -44,56 +48,57 @@ async def fetch_recipe(category):
     }
 
 
-async def main():
+async def main() -> None:
     # Load grocery list
-    grocery_items = load_grocery_list("./data/grocery_list.txt")
+    grocery_items: list[None] | list[str] = load_grocery_list(
+        file_path="./data/grocery_list.txt",
+    )
     if not grocery_items:
         print("Grocery list is empty or file not found.")
         return
 
     # Initialize Ollama client
-    client = AsyncClient()
-
+    client: AsyncClient = AsyncClient()
     # Define the functions (tools) for the model
-    tools = [
-        {
-            "type": "function",
-            "function": {
-                "name": "fetch_price_and_nutrition",
-                "description": "Fetch price and nutrition data for a grocery item",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "item": {
-                            "type": "string",
-                            "description": "The name of the grocery item",
-                        },
-                    },
-                    "required": ["item"],
-                },
-            },
-        },
-        {
-            "type": "function",
-            "function": {
-                "name": "fetch_recipe",
-                "description": "Fetch a recipe based on a category",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "category": {
-                            "type": "string",
-                            "description": "The category of food (e.g., Produce, Dairy)",
-                        },
-                    },
-                    "required": ["category"],
-                },
-            },
-        },
-    ]
+    # tools: list[dict[str, Any]] = [
+    #     {
+    #         "type": "function",
+    #         "function": {
+    #             "name": "fetch_price_and_nutrition",
+    #             "description": "Fetch price and nutrition data for a grocery item",
+    #             "parameters": {
+    #                 "type": "object",
+    #                 "properties": {
+    #                     "item": {
+    #                         "type": "string",
+    #                         "description": "The name of the grocery item",
+    #                     },
+    #                 },
+    #                 "required": ["item"],
+    #             },
+    #         },
+    #     },
+    #     {
+    #         "type": "function",
+    #         "function": {
+    #             "name": "fetch_recipe",
+    #             "description": "Fetch a recipe based on a category",
+    #             "parameters": {
+    #                 "type": "object",
+    #                 "properties": {
+    #                     "category": {
+    #                         "type": "string",
+    #                         "description": "The category of food (e.g., Produce, Dairy)",
+    #                     },
+    #                 },
+    #                 "required": ["category"],
+    #             },
+    #         },
+    #     },
+    # ]
 
     # Step 1: Categorize items using the model
-    categorize_prompt = f"""
+    categorize_prompt: str = f"""
 You are an assistant that categorizes grocery items.
 
 **Instructions:**
@@ -113,15 +118,15 @@ You are an assistant that categorizes grocery items.
 
 **Grocery Items:**
 
-{', '.join(grocery_items)}
+{", ".join(grocery_items)}
 """
 
-    messages = [{"role": "user", "content": categorize_prompt}]
+    messages: list[dict[str, Any]] = [{"role": "user", "content": categorize_prompt}]
     # First API call: Categorize items
-    response = await client.chat(
-        model="llama3.2",
+    response: ChatResponse = await client.chat(
+        model=model,
         messages=messages,
-        tools=tools,  # No function calling needed here, but included for consistency
+        # tools=tools,  No function calling needed here, but included for consistency
     )
 
     # Add the model's response to the conversation history
@@ -129,10 +134,12 @@ You are an assistant that categorizes grocery items.
     print(response["message"]["content"])
 
     # Parse the model's response
-    assistant_message = response["message"]["content"]
+    assistant_message: str = response["message"]["content"]
 
     try:
-        categorized_items = json.loads(assistant_message)
+        categorized_items: dict[str, list[str]] = json.loads(
+            s=assistant_message,
+        )
         print("Categorized items:")
         print(categorized_items)
 
@@ -146,17 +153,17 @@ You are an assistant that categorizes grocery items.
 
     # Construct a message to instruct the model to fetch data for each item
     # We'll ask the model to decide which items to fetch data for by using function calling
-    fetch_prompt = """
+    fetch_prompt: str = """
     For each item in the grocery list, use the 'fetch_price_and_nutrition' function to get its price and nutrition data.
     """
 
     messages.append({"role": "user", "content": fetch_prompt})
 
     # Second API call: The model should decide to call the function for each item
-    response = await client.chat(
-        model="llama3.2",
+    response: ChatResponse = await client.chat(
+        model=model,
         messages=messages,
-        tools=tools,
+        # tools=tools,
     )
     # Add the model's response to the conversation history
     messages.append(response["message"])
@@ -194,17 +201,19 @@ You are an assistant that categorizes grocery items.
     # Step 3: Fetch a recipe for a random category using function calling
 
     # Choose a random category
-    random_category = random.choice(list(categorized_items.keys()))
-    recipe_prompt = f"""
+    random_category: str = random.choice(
+        seq=list(categorized_items.keys()),
+    )
+    recipe_prompt: str = f"""
     Fetch a recipe for the '{random_category}' category using the 'fetch_recipe' function.
     """
     messages.append({"role": "user", "content": recipe_prompt})
 
     # Third API call: The model should decide to call the 'fetch_recipe' function
-    response = await client.chat(
-        model="llama3.2",
+    response: ChatResponse = await client.chat(
+        model=model,
         messages=messages,
-        tools=tools,
+        # tools=tools,
     )
 
     # Add the model's response to the conversation history
@@ -232,10 +241,10 @@ You are an assistant that categorizes grocery items.
         return
 
     # Final API call: Get the assistant's final response
-    final_response = await client.chat(
-        model="llama3.2",
+    final_response: ChatResponse = await client.chat(
+        model=model,
         messages=messages,
-        tools=tools,
+        # tools=tools,
     )
 
     print("\nAssistant's Final Response:")
@@ -243,4 +252,4 @@ You are an assistant that categorizes grocery items.
 
 
 # Run the async main function
-asyncio.run(main())
+asyncio.run(main=main())

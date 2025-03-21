@@ -1,13 +1,14 @@
 import ollama
 
+model: str = "CodeLlama:7b"
 
-response = ollama.list()
+response: ollama.ListResponse = ollama.list()
 
 # print(response)
 
 # == Chat example ==
-res = ollama.chat(
-    model="llama3.2",
+res: ollama.ChatResponse = ollama.chat(
+    model=model,
     messages=[
         {"role": "user", "content": "why is the sky blue?"},
     ],
@@ -15,8 +16,8 @@ res = ollama.chat(
 # print(res["message"]["content"])
 
 # == Chat example streaming ==
-res = ollama.chat(
-    model="llama3.2",
+res: ollama.ChatResponse = ollama.chat(
+    model=model,
     messages=[
         {
             "role": "user",
@@ -34,27 +35,32 @@ res = ollama.chat(
 # ==================================================================================
 
 # == Generate example ==
-res = ollama.generate(
-    model="llama3.2",
+res: ollama.GenerateResponse = ollama.generate(
+    model=model,
     prompt="why is the sky blue?",
 )
 
 # show
-# print(ollama.show("llama3.2"))
+# print(ollama.show(model))
 
 
 # Create a new model with modelfile
-modelfile = """
+new_model: str = "knowitall"
+
+modelfile: str = """
 FROM llama3.2
 SYSTEM You are very smart assistant who knows everything about oceans. You are very succinct and informative.
 PARAMETER temperature 0.1
 """
 
-ollama.create(model="knowitall", modelfile=modelfile)
+ollama.create(model=new_model, modelfile=modelfile)
 
-res = ollama.generate(model="knowitall", prompt="why is the ocean so salty?")
+res: ollama.GenerateResponse = ollama.generate(
+    model=new_model,
+    prompt="why is the ocean so salty?",
+)
 print(res["response"])
 
 
 # delete model
-ollama.delete("knowitall")
+ollama.delete(model=new_model)

@@ -1,3 +1,5 @@
+import subprocess
+
 import ollama
 
 model: str = "CodeLlama:7b"
@@ -47,13 +49,12 @@ res: ollama.GenerateResponse = ollama.generate(
 # Create a new model with modelfile
 new_model: str = "knowitall"
 
-modelfile: str = """
-FROM llama3.2
-SYSTEM You are very smart assistant who knows everything about oceans. You are very succinct and informative.
-PARAMETER temperature 0.1
-"""
+modelfile_path = "./Modelfile"
 
-ollama.create(model=new_model, modelfile=modelfile)
+subprocess.run(
+    args=["ollama", "create", new_model, "-f", modelfile_path],
+    check=True,
+)
 
 res: ollama.GenerateResponse = ollama.generate(
     model=new_model,

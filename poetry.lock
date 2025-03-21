@@ -5742,23 +5742,42 @@ backoff = "*"
 beautifulsoup4 = "*"
 chardet = "*"
 dataclasses-json = "*"
+effdet = {version = "*", optional = true, markers = "extra == \"all-docs\""}
 emoji = "*"
 filetype = "*"
+google-cloud-vision = {version = "*", optional = true, markers = "extra == \"all-docs\""}
 html5lib = "*"
 langdetect = "*"
 lxml = "*"
+markdown = {version = "*", optional = true, markers = "extra == \"all-docs\""}
+networkx = {version = "*", optional = true, markers = "extra == \"all-docs\""}
 nltk = "*"
 numpy = "*"
+onnx = {version = ">=1.17.0", optional = true, markers = "extra == \"all-docs\""}
+onnxruntime = {version = ">=1.19.0", optional = true, markers = "extra == \"all-docs\""}
+openpyxl = {version = "*", optional = true, markers = "extra == \"all-docs\""}
+pandas = {version = "*", optional = true, markers = "extra == \"all-docs\""}
+pdf2image = {version = "*", optional = true, markers = "extra == \"all-docs\""}
+"pdfminer.six" = {version = "*", optional = true, markers = "extra == \"all-docs\""}
+pi-heif = {version = "*", optional = true, markers = "extra == \"all-docs\""}
+pikepdf = {version = "*", optional = true, markers = "extra == \"all-docs\""}
 psutil = "*"
+pypandoc = {version = "*", optional = true, markers = "extra == \"all-docs\""}
+pypdf = {version = "*", optional = true, markers = "extra == \"all-docs\""}
+python-docx = {version = ">=1.1.2", optional = true, markers = "extra == \"all-docs\""}
 python-iso639 = "*"
 python-magic = "*"
 python-oxmsg = "*"
+python-pptx = {version = ">=1.0.1", optional = true, markers = "extra == \"all-docs\""}
 rapidfuzz = "*"
 requests = "*"
 tqdm = "*"
 typing-extensions = "*"
 unstructured-client = "*"
+unstructured-inference = {version = ">=0.8.10", optional = true, markers = "extra == \"all-docs\""}
+"unstructured.pytesseract" = {version = ">=0.3.12", optional = true, markers = "extra == \"all-docs\""}
 wrapt = "*"
+xlrd = {version = "*", optional = true, markers = "extra == \"all-docs\""}
 
 [package.extras]
 all-docs = ["effdet", "google-cloud-vision", "markdown", "networkx", "onnx (>=1.17.0)", "onnxruntime (>=1.19.0)", "openpyxl", "pandas", "pdf2image", "pdfminer.six", "pi-heif", "pikepdf", "pypandoc", "pypdf", "python-docx (>=1.1.2)", "python-pptx (>=1.0.1)", "unstructured-inference (>=0.8.10)", "unstructured.pytesseract (>=0.3.12)", "xlrd"]

@@ -1,63 +1,71 @@
 # main.py
 
-import os
 import logging
-from langchain_community.document_loaders import UnstructuredPDFLoader
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_community.vectorstores import Chroma
-from langchain_ollama import OllamaEmbeddings
-from langchain.prompts import ChatPromptTemplate, PromptTemplate
-from langchain_ollama import ChatOllama
-from langchain_core.output_parsers import StrOutputParser
-from langchain_core.runnables import RunnablePassthrough
-from langchain.retrievers.multi_query import MultiQueryRetriever
+import os
+from typing import Any
+
 import ollama
+from langchain.prompts import ChatPromptTemplate, PromptTemplate
+from langchain.retrievers.multi_query import MultiQueryRetriever
+from langchain_community.document_loaders import UnstructuredPDFLoader
+from langchain_community.vectorstores import Chroma
+from langchain_core.documents.base import Document
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.runnables import RunnablePassthrough, RunnableSequence
+from langchain_ollama import ChatOllama, OllamaEmbeddings
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 
 # Constants
 DOC_PATH = "./data/BOI.pdf"
-MODEL_NAME = "llama3.2"
+MODEL_NAME = "CodeLlama:7b"
 EMBEDDING_MODEL = "nomic-embed-text"
 VECTOR_STORE_NAME = "simple-rag"
 
 
-def ingest_pdf(doc_path):
+def ingest_pdf(doc_path: str) -> list[Document] | None:
     """Load PDF documents."""
-    if os.path.exists(doc_path):
+    if os.path.exists(path=doc_path):
         loader = UnstructuredPDFLoader(file_path=doc_path)
-        data = loader.load()
-        logging.info("PDF loaded successfully.")
+        data: list[Document] = loader.load()
+        logging.info(msg="PDF loaded successfully.")
         return data
     else:
-        logging.error(f"PDF file not found at path: {doc_path}")
+        logging.error(msg=f"PDF file not found at path: {doc_path}")
         return None
 
 
-def split_documents(documents):
+def split_documents(documents: list[Document]) -> list[Document]:
     """Split documents into smaller chunks."""
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1200, chunk_overlap=300)
-    chunks = text_splitter.split_documents(documents)
-    logging.info("Documents split into chunks.")
+    text_splitter: RecursiveCharacterTextSplitter = RecursiveCharacterTextSplitter(
+        chunk_size=1200,
+        chunk_overlap=300,
+    )
+    chunks: list[Document] = text_splitter.split_documents(documents=documents)
+    logging.info(msg="Documents split into chunks.")
     return chunks
 
 
-def create_vector_db(chunks):
+def create_vector_db(chunks: list[Document]) -> Chroma:
     """Create a vector database from document chunks."""
     # Pull the embedding model if not already available
-    ollama.pull(EMBEDDING_MODEL)
+    ollama.pull(model=EMBEDDING_MODEL)
 
-    vector_db = Chroma.from_documents(
+    vector_db: Chroma = Chroma.from_documents(
         documents=chunks,
         embedding=OllamaEmbeddings(model=EMBEDDING_MODEL),
         collection_name=VECTOR_STORE_NAME,
     )
-    logging.info("Vector database created.")
+    logging.info(msg="Vector database created.")
     return vector_db
 
 
-def create_retriever(vector_db, llm):
+def create_retriever(
+    vector_db: Chroma,
+    llm: ChatOllama,
+) -> MultiQueryRetriever:
     """Create a multi-query retriever."""
     QUERY_PROMPT = PromptTemplate(
         input_variables=["question"],
@@ -69,14 +77,17 @@ similarity search. Provide these alternative questions separated by newlines.
 Original question: {question}""",
     )
 
-    retriever = MultiQueryRetriever.from_llm(
-        vector_db.as_retriever(), llm, prompt=QUERY_PROMPT
+    retriever: MultiQueryRetriever = MultiQueryRetriever.from_llm(
+        retriever=vector_db.as_retriever(), llm=llm, prompt=QUERY_PROMPT
     )
-    logging.info("Retriever created.")
+    logging.info(msg="Retriever created.")
     return retriever
 
 
-def create_chain(retriever, llm):
+def create_chain(
+    retriever: MultiQueryRetriever,
+    llm: ChatOllama,
+) -> RunnableSequence[dict[str, Any], str]:
     """Create the chain"""
     # RAG prompt
     template = """Answer the question based ONLY on the following context:
@@ -84,45 +95,53 @@ def create_chain(retriever, llm):
 Question: {question}
 """
 
-    prompt = ChatPromptTemplate.from_template(template)
+    prompt: ChatPromptTemplate = ChatPromptTemplate.from_template(
+        template=template,
+    )
 
-    chain = (
+    chain: RunnableSequence[dict[str, Any], str] = (
         {"context": retriever, "question": RunnablePassthrough()}
         | prompt
         | llm
         | StrOutputParser()
     )
 
-    logging.info("Chain created successfully.")
+    logging.info(msg="Chain created successfully.")
     return chain
 
 
-def main():
+def main() -> None:
     # Load and process the PDF document
-    data = ingest_pdf(DOC_PATH)
+    data: list[Document] | None = ingest_pdf(doc_path=DOC_PATH)
     if data is None:
         return
 
     # Split the documents into chunks
-    chunks = split_documents(data)
+    chunks: list[Document] = split_documents(documents=data)
 
     # Create the vector database
-    vector_db = create_vector_db(chunks)
+    vector_db: Chroma = create_vector_db(chunks=chunks)
 
     # Initialize the language model
-    llm = ChatOllama(model=MODEL_NAME)
+    llm: ChatOllama = ChatOllama(model=MODEL_NAME)
 
     # Create the retriever
-    retriever = create_retriever(vector_db, llm)
+    retriever: MultiQueryRetriever = create_retriever(
+        vector_db=vector_db,
+        llm=llm,
+    )
 
     # Create the chain with preserved syntax
-    chain = create_chain(retriever, llm)
+    chain: RunnableSequence[dict[str, Any], str] = create_chain(
+        retriever=retriever,
+        llm=llm,
+    )
 
     # Example query
-    question = "How to report BOI?"
+    question: str = "How to report BOI?"
 
     # Get the response
-    res = chain.invoke(input=question)
+    res: str = chain.invoke(input=question)
     print("Response:")
     print(res)
 

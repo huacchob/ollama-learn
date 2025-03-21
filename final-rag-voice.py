@@ -7,6 +7,8 @@ from langchain_core.documents import Document
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
+# you may need to intall the mpv package
+# brew install mpv
 # Update this with the model you would like to use
 model = "CodeLlama:7b"
 
@@ -214,6 +216,7 @@ load_dotenv()
 text_response: str = response
 
 # Add ELEVENLABS_API_KEY env var with your elevelabs api key
+# export ELEVEN_LABS_API_KEY="api-key"
 api_key: str | None = os.getenv(key="ELEVENLABS_API_KEY")
 
 # Generate the audio stream

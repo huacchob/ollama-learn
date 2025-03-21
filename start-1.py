@@ -1,15 +1,18 @@
-import requests
 import json
 
-url = "http://localhost:11434/api/generate"
+import requests
 
-data = {
-    "model": "llama3.2",
+model: str = "CodeLlama:7b"
+
+url: str = "http://localhost:11434/api/generate"
+
+data: dict[str, str] = {
+    "model": model,
     "prompt": "tell me a short story and make it funny.",
 }
 
-response = requests.post(
-    url, json=data, stream=True
+response: requests.Response = requests.post(
+    url=url, json=data, stream=True
 )  # remove the stream=True to get the full response
 
 
@@ -20,8 +23,8 @@ if response.status_code == 200:
     for line in response.iter_lines():
         if line:
             # Decode the line and parse the JSON
-            decoded_line = line.decode("utf-8")
-            result = json.loads(decoded_line)
+            decoded_line: str = line.decode("utf-8")
+            result: dict[str, str] = json.loads(s=decoded_line)
             # Get the text from the response
             generated_text = result.get("response", "")
             print(generated_text, end="", flush=True)

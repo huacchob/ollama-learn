@@ -1,26 +1,27 @@
-import ollama
 import os
 
-model = "llama3.2"
+import ollama
+
+model: str = "CodeLlama:7b"
 
 # Paths to input and output files
-input_file = "./data/grocery_list.txt"
-output_file = "./data/categorized_grocery_list.txt"
+input_file: str = "./data/grocery_list.txt"
+output_file: str = "./data/categorized_grocery_list.txt"
 
 
 # Check if the input file exists
-if not os.path.exists(input_file):
+if not os.path.exists(path=input_file):
     print(f"Input file '{input_file}' not found.")
-    exit(1)
+    exit(code=1)
 
 
 # Read the uncategorized grocery items from the input file
-with open(input_file, "r") as f:
-    items = f.read().strip()
+with open(file=input_file, mode="r", encoding="utf-8") as f:
+    items: str = f.read().strip()
 
 
 # Prepare the prompt for the model
-prompt = f"""
+prompt: str = f"""
 You are an assistant that categorizes and sorts grocery items.
 
 Here is a list of grocery items:
@@ -38,15 +39,18 @@ Please:
 
 # Send the prompt and get the response
 try:
-    response = ollama.generate(model=model, prompt=prompt)
-    generated_text = response.get("response", "")
+    response: ollama.GenerateResponse = ollama.generate(
+        model=model,
+        prompt=prompt,
+    )
+    generated_text: str = response.get(key="response", default="")
     print("==== Categorized List: ===== \n")
     print(generated_text)
 
     # Write the categorized list to the output file
-    with open(output_file, "w") as f:
+    with open(file=output_file, mode="w") as f:
         f.write(generated_text.strip())
 
     print(f"Categorized grocery list has been saved to '{output_file}'.")
 except Exception as e:
-    print("An error occurred:", str(e))
+    print("An error occurred:", str(object=e))

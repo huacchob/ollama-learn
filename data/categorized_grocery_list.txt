@@ -1,67 +1,47 @@
-Produce:
-• Apples
-• Bananas
-• Broccoli
-• Carrots
-• Garlic
-• Lettuce
-• Mushrooms
-• Onions
-• Potatoes
-• Spinach
-• Tomatoes
-• Bell Peppers
+Categorize these items into appropriate categories such as Produce, Dairy, Meat, Bakery, Beverages:
+* Produce: Apples, Bananas, Broccoli, Carrots, Garlic, Green Peas, Mushrooms, Onions, Potatoes, Spinach, Tomato
+* Dairy: Cheese, Cream, Eggs, Milk
+* Meat: Chicken Breast, Ground Beef, Shrimp, Sausages
+* Bakery: Bread, Cereal, Oatmeal
+* Beverages: Almond milk, Coffee, Orange Juice, Tea, Water
 
-Dairy:
-• Cheese
-• Eggs
-• Milk
+Sort the items alphabetically within each category.
+* Produce: Apples, Bananas, Broccoli, Carrots, Garlic, Green Peas, Mushrooms, Onions, Potatoes, Spinach, Tomato
+* Dairy: Cheese, Cream, Eggs, Milk
+* Meat: Chicken Breast, Ground Beef, Shrimp, Sausages
+* Bakery: Bread, Cereal, Oatmeal
+* Beverages: Almond milk, Coffee, Orange Juice, Tea, Water
 
-Meat:
-• Beef
-• Chicken Breast
-• Ground Beef
-• Salmon
-• Shrimp
-• Sausages
-
-Bakery:
-• Bread
-• Cereal
-• Pasta
-• Rice
-
-Beverages:
-• Almond Milk
-• Black Tea
-• Coffee
-• Fruit Juice
-• Ginger Ale
-• Oatmeal
-• Orange Juice
-• Tea
-• Water
-
-Pantry:
-• Chips
-• Cookies
-• Granola Bars
-• Honey
-• Jam
-• Peanut Butter
-• Rice
-• Shampoo
-• Sugar
-• Toothpaste
-• Olive Oil
-
-Miscellaneous:
-• Almonds
-• Coffee Beans
-• Chocolate
-• Dish Soap
-• Laundry Detergent
-• Paper Towels
-• Soda
-• Toilet Paper
-• Toothpaste
+Present the categorized list in a clear and organized manner, using bullet points or numbering.
+• Produce
+- Apples
+- Bananas
+- Broccoli
+- Carrots
+- Garlic
+- Green Peas
+- Mushrooms
+- Onions
+- Potatoes
+- Spinach
+- Tomatoes
+• Dairy
+- Cheese
+- Cream
+- Eggs
+- Milk
+• Meat
+- Chicken Breast
+- Ground Beef
+- Shrimp
+- Sausages
+• Bakery
+- Bread
+- Cereal
+- Oatmeal
+• Beverages
+- Almond milk
+- Coffee
+- Orange Juice
+- Tea
+- Water

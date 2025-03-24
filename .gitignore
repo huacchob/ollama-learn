@@ -18,4 +18,4 @@ db/
 .qodo
 
 # Python metadata files
-*/*.pyc
+*pyc

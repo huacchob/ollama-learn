@@ -1,0 +1,67 @@
+Produce:
+• Apples
+• Bananas
+• Broccoli
+• Carrots
+• Garlic
+• Lettuce
+• Mushrooms
+• Onions
+• Potatoes
+• Spinach
+• Tomatoes
+• Bell Peppers
+
+Dairy:
+• Cheese
+• Eggs
+• Milk
+
+Meat:
+• Beef
+• Chicken Breast
+• Ground Beef
+• Salmon
+• Shrimp
+• Sausages
+
+Bakery:
+• Bread
+• Cereal
+• Pasta
+• Rice
+
+Beverages:
+• Almond Milk
+• Black Tea
+• Coffee
+• Fruit Juice
+• Ginger Ale
+• Oatmeal
+• Orange Juice
+• Tea
+• Water
+
+Pantry:
+• Chips
+• Cookies
+• Granola Bars
+• Honey
+• Jam
+• Peanut Butter
+• Rice
+• Shampoo
+• Sugar
+• Toothpaste
+• Olive Oil
+
+Miscellaneous:
+• Almonds
+• Coffee Beans
+• Chocolate
+• Dish Soap
+• Laundry Detergent
+• Paper Towels
+• Soda
+• Toilet Paper
+• Toothpaste

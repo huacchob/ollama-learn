@@ -16,3 +16,6 @@ chroma_db/
 # ignore the db folder
 db/
 .qodo
+
+# Python metadata files
+*/*.pyc

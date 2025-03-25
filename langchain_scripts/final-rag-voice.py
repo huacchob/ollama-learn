@@ -1,5 +1,4 @@
 import os
-import pdb
 from glob import glob
 from pathlib import Path
 from typing import Iterator, Union
@@ -268,7 +267,6 @@ from elevenlabs.client import ElevenLabs
 
 dot_env_path: Path = root_dir.joinpath("creds.env")
 load_dotenv(dotenv_path=str(object=dot_env_path))
-pdb.set_trace()
 
 # Add ELEVENLABS_API_KEY env var with your elevelabs api key
 # copy creds.env.example to creds.env and add your api key

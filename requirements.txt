@@ -35,7 +35,7 @@ emoji==2.14.1
 et_xmlfile==2.0.0
 eval_type_backport==0.2.2
 fastapi==0.115.11
-fastembed==0.5.1
+fastembed==0.6.0
 filelock==3.18.0
 filetype==1.2.0
 flatbuffers==25.2.10

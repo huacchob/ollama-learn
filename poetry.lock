@@ -1044,23 +1044,23 @@ standard = ["email-validator (>=2.0.0)", "fastapi-cli[standard] (>=0.0.5)", "htt
 
 [[package]]
 name = "fastembed"
-version = "0.5.1"
+version = "0.6.0"
 description = "Fast, light, accurate library built for retrieval embedding generation"
 optional = false
 python-versions = ">=3.9.0"
 groups = ["main"]
 files = [
-    {file = "fastembed-0.5.1-py3-none-any.whl", hash = "sha256:93dc5a0d0e39b4a38f1525c97624e97bfc0d879fea0e92779ec4606046fe91cb"},
-    {file = "fastembed-0.5.1.tar.gz", hash = "sha256:93ccdbead9daadde6af37862c53b92fd15fa3115d20bbddb258faa0a5eb36718"},
+    {file = "fastembed-0.6.0-py3-none-any.whl", hash = "sha256:a08385e9388adea0529a586004f2d588c9787880a510e4e5d167127a11e75328"},
+    {file = "fastembed-0.6.0.tar.gz", hash = "sha256:5c9ead25f23449535b07243bbe1f370b820dcc77ec2931e61674e3fe7ff24733"},
 ]
 
 [package.dependencies]
 huggingface-hub = ">=0.20,<1.0"
 loguru = ">=0.7.2,<0.8.0"
-mmh3 = ">=4.1.0,<5.0.0"
-numpy = {version = ">=1.26", markers = "python_version >= \"3.12\" and python_version < \"3.13\""}
+mmh3 = ">=4.1.0,<6.0.0"
+numpy = {version = ">=1.26", markers = "python_version == \"3.12\""}
 onnxruntime = {version = ">=1.17.0,<1.20.0 || >1.20.0", markers = "python_version >= \"3.10\" and python_version < \"3.13\""}
-pillow = ">=10.3.0,<11.0.0"
+pillow = ">=10.3.0,<12.0.0"
 py-rust-stemmers = ">=0.1.0,<0.2.0"
 requests = ">=2.31,<3.0"
 tokenizers = ">=0.15,<1.0"
@@ -6165,42 +6165,23 @@ backoff = "*"
 beautifulsoup4 = "*"
 chardet = "*"
 dataclasses-json = "*"
-effdet = {version = "*", optional = true, markers = "extra == \"all-docs\""}
 emoji = "*"
 filetype = "*"
-google-cloud-vision = {version = "*", optional = true, markers = "extra == \"all-docs\""}
 html5lib = "*"
 langdetect = "*"
 lxml = "*"
-markdown = {version = "*", optional = true, markers = "extra == \"all-docs\""}
-networkx = {version = "*", optional = true, markers = "extra == \"all-docs\""}
 nltk = "*"
 numpy = "*"
-onnx = {version = ">=1.17.0", optional = true, markers = "extra == \"all-docs\""}
-onnxruntime = {version = ">=1.19.0", optional = true, markers = "extra == \"all-docs\""}
-openpyxl = {version = "*", optional = true, markers = "extra == \"all-docs\""}
-pandas = {version = "*", optional = true, markers = "extra == \"all-docs\""}
-pdf2image = {version = "*", optional = true, markers = "extra == \"all-docs\""}
-"pdfminer.six" = {version = "*", optional = true, markers = "extra == \"all-docs\""}
-pi-heif = {version = "*", optional = true, markers = "extra == \"all-docs\""}
-pikepdf = {version = "*", optional = true, markers = "extra == \"all-docs\""}
 psutil = "*"
-pypandoc = {version = "*", optional = true, markers = "extra == \"all-docs\""}
-pypdf = {version = "*", optional = true, markers = "extra == \"all-docs\""}
-python-docx = {version = ">=1.1.2", optional = true, markers = "extra == \"all-docs\""}
 python-iso639 = "*"
 python-magic = "*"
 python-oxmsg = "*"
-python-pptx = {version = ">=1.0.1", optional = true, markers = "extra == \"all-docs\""}
 rapidfuzz = "*"
 requests = "*"
 tqdm = "*"
 typing-extensions = "*"
 unstructured-client = "*"
-unstructured-inference = {version = ">=0.8.10", optional = true, markers = "extra == \"all-docs\""}
-"unstructured.pytesseract" = {version = ">=0.3.12", optional = true, markers = "extra == \"all-docs\""}
 wrapt = "*"
-xlrd = {version = "*", optional = true, markers = "extra == \"all-docs\""}
 
 [package.extras]
 all-docs = ["effdet", "google-cloud-vision", "markdown", "networkx", "onnx (>=1.17.0)", "onnxruntime (>=1.19.0)", "openpyxl", "pandas", "pdf2image", "pdfminer.six", "pi-heif", "pikepdf", "pypandoc", "pypdf", "python-docx (>=1.1.2)", "python-pptx (>=1.0.1)", "unstructured-inference (>=0.8.10)", "unstructured.pytesseract (>=0.3.12)", "xlrd"]
@@ -6991,4 +6972,4 @@ cffi = ["cffi (>=1.11)"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.13"
-content-hash = "4c51cf5aeb2d935c9b02f8371ffc374c3626ae8ad90542413ff835c7e9f21de8"
+content-hash = "55a1e95fd3fcb01e4818ac69136162ce7015626f4d00600dd69d14ecf3c79407"

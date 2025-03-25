@@ -11,8 +11,6 @@ from langchain_core.vectorstores.base import VectorStoreRetriever
 
 from .utility import find_root_directory
 
-root_dir: Path = find_root_directory(file=__file__)
-
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 # Update this with the model you would like to use
@@ -20,10 +18,14 @@ model: str = "CodeLlama:7b"
 embeding_model: str = "nomic-embed-text"
 text_to_speech_model: str = "eleven_turbo_v2"
 
+# Directories and files
+root_dir: Path = find_root_directory(file=__file__)
 pdf_directory: Path = root_dir.joinpath("data/*.pdf")
+vector_db_path: Path = root_dir.joinpath("db/vector_db")
+dot_env_path: Path = root_dir.joinpath("creds.env")
 
+# Load the PDF files
 pdf_files: list[str] = glob(pathname=str(object=pdf_directory))
-
 # This list will contain all pages from the PDF
 all_pages: list[Document] = []
 
@@ -81,13 +83,9 @@ for page in all_pages:
     chunks: list[str] = text_splitter.split_text(text=page.page_content)
     text_chunks.extend(chunks)
 
-print(f"Number of text chunks: {text_chunks}")
-
-
 # === Create Metadata for Text Chunks ===
 # Example metadata management (customize as needed)
 import datetime
-import pprint
 
 
 def add_metadata(
@@ -120,8 +118,6 @@ metadata_text_chunks: list[dict[str, Union[str, dict[str, str]]]] = add_metadata
     chunks=text_chunks,
     doc_title="BOI US FinCEN",
 )
-pprint.pprint(object=f"metadata text chunks: {metadata_text_chunks}")
-
 
 # === Create Embedding from Text Chunks ===
 # Function to generate embeddings for text chunks
@@ -165,16 +161,14 @@ docs: list[Document] = [
 ]
 
 # == Use fastEmbeddings model from Ollama ==
-# for lightweight and fast embedding generation
 from langchain_chroma import Chroma
 from langchain_community.embeddings.fastembed import FastEmbedEmbeddings
 
+# for lightweight and fast embedding generation
 fastembedding: FastEmbedEmbeddings = FastEmbedEmbeddings()
-# Also for performance improvement, persist the vector database
-vector_db_path: Path = root_dir.joinpath("db/vector_db")
 
 # Create a chroma vector store from the list of Documents
-# Data will persist
+# Data will persist for better performance
 vector_db: Chroma = Chroma.from_documents(
     documents=docs,
     embedding=fastembedding,
@@ -183,7 +177,7 @@ vector_db: Chroma = Chroma.from_documents(
 )
 
 
-# Implement a Query Processing Muliti-query Retriever
+# Implement a Query Processing Multi-query Retriever
 from langchain.prompts import PromptTemplate
 from langchain.retrievers.multi_query import MultiQueryRetriever
 from langchain_core.output_parsers import StrOutputParser
@@ -265,7 +259,6 @@ from dotenv import load_dotenv
 from elevenlabs import stream
 from elevenlabs.client import ElevenLabs
 
-dot_env_path: Path = root_dir.joinpath("creds.env")
 load_dotenv(dotenv_path=str(object=dot_env_path))
 
 # Add ELEVENLABS_API_KEY env var with your elevelabs api key

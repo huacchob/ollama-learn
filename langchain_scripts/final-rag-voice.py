@@ -16,8 +16,6 @@ root_dir: Path = find_root_directory(file=__file__)
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
-# you may need to intall the mpv package
-# brew install mpv
 # Update this with the model you would like to use
 model: str = "CodeLlama:7b"
 embeding_model: str = "nomic-embed-text"
@@ -262,6 +260,8 @@ response: str = chain.invoke(input=questions)
 print(response)
 
 # # === TALK TO THE MODEL ===
+# you may need to intall the mpv package
+# brew install mpv
 from dotenv import load_dotenv
 from elevenlabs import stream
 from elevenlabs.client import ElevenLabs

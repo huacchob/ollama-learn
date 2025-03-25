@@ -19,7 +19,9 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 # you may need to intall the mpv package
 # brew install mpv
 # Update this with the model you would like to use
-model = "CodeLlama:7b"
+model: str = "CodeLlama:7b"
+embeding_model: str = "nomic-embed-text"
+text_to_speech_model: str = "eleven_turbo_v2"
 
 pdf_directory: Path = root_dir.joinpath("data/*.pdf")
 
@@ -128,7 +130,7 @@ pprint.pprint(object=f"metadata text chunks: {metadata_text_chunks}")
 # Function to generate embeddings for text chunks
 # def generate_embeddings(
 #     text_chunks: list[str],
-#     model_name: str = "nomic-embed-text",
+#     model_name: str = embeding_model,
 # ) -> list[ollama.EmbedResponse]:
 #     """Generate embeddings for text chunks.
 
@@ -172,14 +174,14 @@ from langchain_community.embeddings.fastembed import FastEmbedEmbeddings
 
 fastembedding: FastEmbedEmbeddings = FastEmbedEmbeddings()
 # Also for performance improvement, persist the vector database
-vector_db_path: str = "./db/vector_db"
+vector_db_path: Path = root_dir.joinpath("db/vector_db")
 
 # Create a chroma vector store from the list of Documents
 # Data will persist
 vector_db: Chroma = Chroma.from_documents(
     documents=docs,
     embedding=fastembedding,
-    persist_directory=vector_db_path,
+    persist_directory=str(object=vector_db_path),
     collection_name="docs-local-rag",
 )
 
@@ -268,18 +270,19 @@ dot_env_path: Path = root_dir.joinpath("creds.env")
 load_dotenv(dotenv_path=str(object=dot_env_path))
 pdb.set_trace()
 
-text_response: str = response
-
 # Add ELEVENLABS_API_KEY env var with your elevelabs api key
 # copy creds.env.example to creds.env and add your api key
 api_key: str | None = os.getenv(key="ELEVENLABS_API_KEY")
 
 # Initiate the ElevenLabs client
 client: ElevenLabs = ElevenLabs(api_key=api_key)
+
+# Generate the audio stream
 audio_stream: Iterator[bytes] = client.generate(
-    text=text_response,
-    model="eleven_turbo_v2",
+    text=response,
+    model=text_to_speech_model,
     stream=True,
 )
-# play(audio_stream)
+
+# play the audio stream
 stream(audio_stream=audio_stream)

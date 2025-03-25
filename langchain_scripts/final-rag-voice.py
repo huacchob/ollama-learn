@@ -1,5 +1,4 @@
 import os
-import pdb
 from glob import glob
 from pathlib import Path
 from typing import Union
@@ -250,7 +249,6 @@ chain: Runnable[dict[str, str], str] = (
     | llm
     | output_parser
 )
-pdb.set_trace()
 
 questions: str = """
 by when should I file if my business was established in 2013?"""

@@ -1,7 +1,8 @@
 import os
+import pdb
 from glob import glob
 from pathlib import Path
-from typing import Union
+from typing import Iterator, Union
 
 import ollama
 from langchain.prompts import ChatPromptTemplate
@@ -11,7 +12,7 @@ from langchain_core.vectorstores.base import VectorStoreRetriever
 
 from .utility import find_root_directory
 
-current_dir: Path = find_root_directory(file=__file__)
+root_dir: Path = find_root_directory(file=__file__)
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
@@ -20,7 +21,7 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 # Update this with the model you would like to use
 model = "CodeLlama:7b"
 
-pdf_directory: Path = current_dir.joinpath("data/*.pdf")
+pdf_directory: Path = root_dir.joinpath("data/*.pdf")
 
 pdf_files: list[str] = glob(pathname=str(object=pdf_directory))
 
@@ -45,11 +46,11 @@ for pdf_file in pdf_files:
     # Prepare the prompt for the model
     prompt: str = f"""
     You are an AI assistant that helps with summarizing PDF documents.
-    
+
     Here is the content of the PDF file '{pdf_file}':
-    
+
     {text}
-    
+
     Please summarize the content of this document in a few sentences.
     """
 
@@ -259,24 +260,26 @@ response: str = chain.invoke(input=questions)
 print(response)
 
 # # === TALK TO THE MODEL ===
-# from dotenv import load_dotenv
-# from elevenlabs import stream
-# from elevenlabs.client import ElevenLabs
+from dotenv import load_dotenv
+from elevenlabs import stream
+from elevenlabs.client import ElevenLabs
 
-# load_dotenv()
+dot_env_path: Path = root_dir.joinpath("creds.env")
+load_dotenv(dotenv_path=str(object=dot_env_path))
+pdb.set_trace()
 
-# text_response: str = response
+text_response: str = response
 
-# # Add ELEVENLABS_API_KEY env var with your elevelabs api key
-# # export ELEVEN_LABS_API_KEY="api-key"
-# api_key: str | None = os.getenv(key="ELEVENLABS_API_KEY")
+# Add ELEVENLABS_API_KEY env var with your elevelabs api key
+# copy creds.env.example to creds.env and add your api key
+api_key: str | None = os.getenv(key="ELEVENLABS_API_KEY")
 
-# # Generate the audio stream
-# client: ElevenLabs = ElevenLabs(api_key=api_key)
-# audio_stream: Iterator[bytes] = client.generate(
-#     text=text_response,
-#     model="eleven_turbo_v2",
-#     stream=True,
-# )
-# # play(audio_stream)
-# stream(audio_stream=audio_stream)
+# Initiate the ElevenLabs client
+client: ElevenLabs = ElevenLabs(api_key=api_key)
+audio_stream: Iterator[bytes] = client.generate(
+    text=text_response,
+    model="eleven_turbo_v2",
+    stream=True,
+)
+# play(audio_stream)
+stream(audio_stream=audio_stream)

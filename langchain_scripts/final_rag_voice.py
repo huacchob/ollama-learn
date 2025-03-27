@@ -12,9 +12,7 @@ from elevenlabs.client import ElevenLabs
 from langchain.prompts import ChatPromptTemplate, PromptTemplate
 from langchain.retrievers.multi_query import MultiQueryRetriever
 from langchain.schema.runnable import Runnable
-from langchain.text_splitter import (
-    RecursiveCharacterTextSplitter as RCSplitter,
-)
+from langchain.text_splitter import RecursiveCharacterTextSplitter as RCSplitter
 from langchain_chroma import Chroma
 from langchain_community.document_loaders import PDFPlumberLoader
 from langchain_community.embeddings.fastembed import FastEmbedEmbeddings
@@ -31,7 +29,7 @@ class PDFProcessor:
     """PDF Processor class."""
 
     def __init__(self) -> None:
-        """Initializer."""
+        """Initialize."""
         self.all_pages: list[Document]
         self.text_chunks: list[str]
 
@@ -130,15 +128,20 @@ class RAGHandler:
     """RAG Handler class."""
 
     def __init__(self) -> None:
-        """Initializer."""
+        """Initialize."""
         self.llm: ChatOllama
 
-    def create_fast_embedding(self, docs: list[Document]) -> Chroma:
+    def create_fast_embedding(
+        self,
+        docs: list[Document],
+        directory: Path,
+    ) -> Chroma:
         """Create a Chroma vector store from a list of Documents.
 
         Args:
             docs (list[Document]): List of Documents to create a
                 Chroma vector store from.
+            directory (Path): The directory to store the vector store in.
 
         Returns:
             Chroma: Chroma vector store.
@@ -150,7 +153,7 @@ class RAGHandler:
         vector_db: Chroma = Chroma.from_documents(
             documents=docs,
             embedding=fastembedding,
-            persist_directory=str(object=vector_db_path),
+            persist_directory=str(object=directory),
             collection_name="docs-local-rag",
         )
         return vector_db
@@ -189,7 +192,7 @@ class RAGHandler:
         Returns:
             MultiQueryRetriever: Multi-query retriever.
         """
-        QUERY_PROMPT: PromptTemplate = PromptTemplate(
+        query_prompt: PromptTemplate = PromptTemplate(
             input_variables=["question"],
             template="""You are an AI language model assistant. Your task is to generate five
     different versions of the given user question to retrieve relevant documents from
@@ -208,7 +211,7 @@ class RAGHandler:
             vector_db=vector_db,
         )
         retriever: MultiQueryRetriever = MultiQueryRetriever.from_llm(
-            retriever=vector_retriever, llm=self.llm, prompt=QUERY_PROMPT
+            retriever=vector_retriever, llm=self.llm, prompt=query_prompt
         )
         return retriever
 
@@ -266,10 +269,10 @@ class GenerateVoice:
     """Generate Voice using ElevenLabs."""
 
     def __init__(self) -> None:
-        """Initializer."""
-        pass
+        """Initialize."""
+        self.client: ElevenLabs | None
 
-    def client(self, env_path: Path) -> ElevenLabs | None:
+    def create_client(self, env_path: Path) -> None:
         """Create an ElevenLabs client.
 
         Returns:
@@ -278,22 +281,22 @@ class GenerateVoice:
         load_dotenv(dotenv_path=str(object=env_path))
         api_key: str | None = os.getenv(key="ELEVENLABS_API_KEY")
         if api_key is None:
+            self.client: ElevenLabs | None = None
             return
-        return ElevenLabs(api_key=api_key)
+        self.client: ElevenLabs | None = ElevenLabs(api_key=api_key)
 
-    def generate_voice(self, client: ElevenLabs | None, text: str) -> None:
+    def generate_voice(self, text: str, model: str) -> None:
         """Generate voice from text.
 
         Args:
-            client (ElevenLabs | None): ElevenLabs client.
             text (str): Text to generate voice from.
         """
         # Generate the audio stream
-        if not client:
+        if not self.client:
             return
-        audio_stream: Iterator[bytes] = client.generate(
+        audio_stream: Iterator[bytes] = self.client.generate(
             text=text,
-            model=text_to_speech_model,
+            model=model,
             stream=True,
         )
 
@@ -302,8 +305,7 @@ class GenerateVoice:
 
 
 # Update this with the model you would like to use
-model: str = "CodeLlama:7b"
-embeding_model: str = "nomic-embed-text"
+ollama_model: str = "CodeLlama:7b"
 text_to_speech_model: str = "eleven_turbo_v2"
 
 # Directories and files
@@ -314,7 +316,7 @@ dot_env_path: Path = root_dir.joinpath("creds.env")
 
 
 def main() -> None:
-    """Main function."""
+    """Run main function."""
     pdf_processor: PDFProcessor = PDFProcessor()
     pdf_processor.load_pdf_files(directory=pdf_directory)
     pdf_processor.split_and_chunk()
@@ -324,15 +326,16 @@ def main() -> None:
     )
     print("Finished processing PDF files.")
     rag_handler: RAGHandler = RAGHandler()
-    rag_handler.create_ollama_chat(model=model)
-    vector_db: Chroma = rag_handler.create_fast_embedding(docs=docs)
+    rag_handler.create_ollama_chat(model=ollama_model)
+    vector_db: Chroma = rag_handler.create_fast_embedding(
+        docs=docs,
+        directory=vector_db_path,
+    )
     text: str = rag_handler.generate_text_response(vector_db=vector_db)
     print("Generated text response:", text)
     elevenlabs = GenerateVoice()
-    elevenlabs.generate_voice(
-        client=elevenlabs.client(env_path=dot_env_path),
-        text=text,
-    )
+    elevenlabs.create_client(env_path=dot_env_path)
+    elevenlabs.generate_voice(text=text, model=text_to_speech_model)
 
 
 if __name__ == "__main__":

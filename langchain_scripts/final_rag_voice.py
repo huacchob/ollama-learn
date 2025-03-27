@@ -42,7 +42,7 @@ class PDFProcessor:
         # Load the PDF files
         pdf_files: list[str] = glob(pathname=str(object=directory))
         # This list will contain all pages from the PDF
-        self.all_pages: list[Document] = []
+        self.all_pages = []
 
         for pdf_file in pdf_files:
             # Load the PDF file using pdfplumber
@@ -62,7 +62,7 @@ class PDFProcessor:
         )
 
         # List will contain all text chunks from the passed pdf pages
-        self.text_chunks: list[str] = []
+        self.text_chunks = []
         for page in self.all_pages:
             chunks: list[str] = text_splitter.split_text(
                 text=page.page_content,
@@ -178,7 +178,7 @@ class RAGHandler:
         Args:
             model (str): Name of the model to use.
         """
-        self.llm: ChatOllama = ChatOllama(model=model)
+        self.llm = ChatOllama(model=model)
 
     def create_rag(
         self,
@@ -248,7 +248,7 @@ class RAGHandler:
         # The third line is an LLM
         # The fourth line is an output parser
         # The callables are chained together using a pipe
-        chain: Runnable[dict[str, str], str] = (
+        chain: Runnable[str, str] = (
             {
                 "context": self.create_rag(vector_db=vector_db),
                 "question": RunnablePassthrough(),
@@ -281,9 +281,9 @@ class GenerateVoice:
         load_dotenv(dotenv_path=str(object=env_path))
         api_key: str | None = os.getenv(key="ELEVENLABS_API_KEY")
         if api_key is None:
-            self.client: ElevenLabs | None = None
+            self.client = None
             return
-        self.client: ElevenLabs | None = ElevenLabs(api_key=api_key)
+        self.client = ElevenLabs(api_key=api_key)
 
     def generate_voice(self, text: str, model: str) -> None:
         """Generate voice from text.

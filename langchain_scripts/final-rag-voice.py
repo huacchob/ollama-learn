@@ -1,3 +1,5 @@
+"""Script generating response from PDF files and generating voice."""
+
 import datetime
 import os
 from glob import glob
@@ -10,7 +12,9 @@ from elevenlabs.client import ElevenLabs
 from langchain.prompts import ChatPromptTemplate, PromptTemplate
 from langchain.retrievers.multi_query import MultiQueryRetriever
 from langchain.schema.runnable import Runnable
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain.text_splitter import (
+    RecursiveCharacterTextSplitter as RCSplitter,
+)
 from langchain_chroma import Chroma
 from langchain_community.document_loaders import PDFPlumberLoader
 from langchain_community.embeddings.fastembed import FastEmbedEmbeddings
@@ -22,31 +26,23 @@ from langchain_ollama import ChatOllama
 
 from .utility import find_root_directory
 
-# Update this with the model you would like to use
-model: str = "CodeLlama:7b"
-embeding_model: str = "nomic-embed-text"
-text_to_speech_model: str = "eleven_turbo_v2"
 
-# Directories and files
-root_dir: Path = find_root_directory(file=__file__)
-pdf_directory: Path = root_dir.joinpath("data/*.pdf")
-vector_db_path: Path = root_dir.joinpath("db/vector_db")
-dot_env_path: Path = root_dir.joinpath("creds.env")
+class PDFProcessor:
+    """PDF Processor class."""
 
-
-class PDFToSpeech:
     def __init__(self) -> None:
+        """Initializer."""
         self.all_pages: list[Document]
         self.text_chunks: list[str]
-        self.docs: list[Document]
-        self.vector_db: Chroma
-        self.llm: ChatOllama
-        self.response: str
 
-    def load_pdf_files(self) -> None:
-        """Load all PDF files from a directory."""
+    def load_pdf_files(self, directory: Path) -> None:
+        """Load PDF files from a directory.
+
+        Args:
+            directory (Path): The directory to load PDF files from.
+        """
         # Load the PDF files
-        pdf_files: list[str] = glob(pathname=str(object=pdf_directory))
+        pdf_files: list[str] = glob(pathname=str(object=directory))
         # This list will contain all pages from the PDF
         self.all_pages: list[Document] = []
 
@@ -59,9 +55,10 @@ class PDFToSpeech:
             self.all_pages.extend(pages)
 
     def split_and_chunk(self) -> None:
+        """Split and chunk PDF pages into text chunks."""
         # Split and chunk
         # Create an object to split text with
-        text_splitter: RecursiveCharacterTextSplitter = RecursiveCharacterTextSplitter(
+        text_splitter: RCSplitter = RCSplitter(
             chunk_size=1200,
             chunk_overlap=300,
         )
@@ -69,20 +66,23 @@ class PDFToSpeech:
         # List will contain all text chunks from the passed pdf pages
         self.text_chunks: list[str] = []
         for page in self.all_pages:
-            chunks: list[str] = text_splitter.split_text(text=page.page_content)
+            chunks: list[str] = text_splitter.split_text(
+                text=page.page_content,
+            )
             self.text_chunks.extend(chunks)
 
-    # === Create Metadata for Text Chunks ===
     def add_metadata(
         self,
         chunks: list[str],
         doc_title: str,
+        author: str,
     ) -> list[dict[str, Union[str, dict[str, str]]]]:
         """Add metadata to text chunks.
 
         Args:
             chunks (list[str]): Chunks of text to add metadata to.
             doc_title (str): Title of the document.
+            author (str): Author of the document.
 
         Returns:
             list[dict[str, Union[str, dict[str, str]]]]: List of dictionaries
@@ -92,45 +92,103 @@ class PDFToSpeech:
         for chunk in chunks:
             metadata: dict[str, str] = {
                 "title": doc_title,
-                "author": "US Business Bureau",  # Update based on document data
+                "author": author,  # Update based on document data
                 "date": str(object=datetime.date.today()),
             }
             metadata_chunks.append({"text": chunk, "metadata": metadata})
         return metadata_chunks
 
-    def apply_metadata_to_documents(self) -> None:
+    def apply_metadata_to_documents(
+        self,
+        doc_title: str,
+        author: str,
+    ) -> list[Document]:
+        """Apply metadata to text chunks.
+
+        Args:
+            doc_title (str): Title for document.
+            author (str): Author of document.
+
+        Returns:
+            list[Document]: List of documents with metadata.
+        """
         metadata_text_chunks: list[dict[str, Union[str, dict[str, str]]]] = (
             self.add_metadata(
                 chunks=self.text_chunks,
-                doc_title="BOI US FinCEN",
+                doc_title=doc_title,
+                author=author,
             )
         )
-        self.docs: list[Document] = [
+        docs: list[Document] = [
             Document(page_content=chunk["text"], metadata=chunk["metadata"])
             for chunk in metadata_text_chunks
         ]
+        return docs
 
-    def create_fast_embedding(self) -> None:
+
+class RAGHandler:
+    """RAG Handler class."""
+
+    def __init__(self) -> None:
+        """Initializer."""
+        self.llm: ChatOllama
+
+    def create_fast_embedding(self, docs: list[Document]) -> Chroma:
+        """Create a Chroma vector store from a list of Documents.
+
+        Args:
+            docs (list[Document]): List of Documents to create a
+                Chroma vector store from.
+
+        Returns:
+            Chroma: Chroma vector store.
+        """
         fastembedding: FastEmbedEmbeddings = FastEmbedEmbeddings()
 
         # Create a chroma vector store from the list of Documents
         # Data will persist for better performance
-        self.vector_db: Chroma = Chroma.from_documents(
-            documents=self.docs,
+        vector_db: Chroma = Chroma.from_documents(
+            documents=docs,
             embedding=fastembedding,
             persist_directory=str(object=vector_db_path),
             collection_name="docs-local-rag",
         )
+        return vector_db
 
-    def use_vector_db_as_retriever(self) -> VectorStoreRetriever:
-        vector_retriever: VectorStoreRetriever = self.vector_db.as_retriever()
-        return vector_retriever
+    def use_vector_db_as_retriever(
+        self,
+        vector_db: Chroma,
+    ) -> VectorStoreRetriever:
+        """Use a Chroma vector store as a retriever.
 
-    def create_ollama_chat(self) -> ChatOllama:
+        Args:
+            vector_db (Chroma): Chroma vector store.
+
+        Returns:
+            VectorStoreRetriever: Vector store retriever.
+        """
+        return vector_db.as_retriever()
+
+    def create_ollama_chat(self, model: str) -> None:
+        """Create an Ollama chat model.
+
+        Args:
+            model (str): Name of the model to use.
+        """
         self.llm: ChatOllama = ChatOllama(model=model)
 
-    def create_rag(self) -> MultiQueryRetriever:
-        # Create a prompt template to use by the model
+    def create_rag(
+        self,
+        vector_db: Chroma,
+    ) -> MultiQueryRetriever:
+        """Create a MultiQueryRetriever from a Chroma vector store.
+
+        Args:
+            vector_db (Chroma): Chroma vector store.
+
+        Returns:
+            MultiQueryRetriever: Multi-query retriever.
+        """
         QUERY_PROMPT: PromptTemplate = PromptTemplate(
             input_variables=["question"],
             template="""You are an AI language model assistant. Your task is to generate five
@@ -146,13 +204,26 @@ class PDFToSpeech:
         # uses an LLM to generate multiple variations of that query
         # performs multiple vector searches
         # combines the results and returns the most relevant documents.
-        vector_retriever: VectorStoreRetriever = self.use_vector_db_as_retriever()
+        vector_retriever: VectorStoreRetriever = self.use_vector_db_as_retriever(
+            vector_db=vector_db,
+        )
         retriever: MultiQueryRetriever = MultiQueryRetriever.from_llm(
             retriever=vector_retriever, llm=self.llm, prompt=QUERY_PROMPT
         )
         return retriever
 
-    def generate_text_response(self) -> None:
+    def generate_text_response(
+        self,
+        vector_db: Chroma,
+    ) -> str:
+        """Generate a text response from a Chroma vector store.
+
+        Args:
+            vector_db (Chroma): Chroma vector store.
+
+        Returns:
+            str: Generated text response.
+        """
         template: str = """Answer the question based ONLY on the following context:
         {context}
         Question: {question}
@@ -175,7 +246,10 @@ class PDFToSpeech:
         # The fourth line is an output parser
         # The callables are chained together using a pipe
         chain: Runnable[dict[str, str], str] = (
-            {"context": self.create_rag(), "question": RunnablePassthrough()}
+            {
+                "context": self.create_rag(vector_db=vector_db),
+                "question": RunnablePassthrough(),
+            }
             | prompt
             | self.llm
             | output_parser
@@ -185,25 +259,40 @@ class PDFToSpeech:
 
         # Actually calling the chain here
         # Passing it the question
-        self.response: str = chain.invoke(input=questions)
+        return chain.invoke(input=questions)
 
-    def generate_voice_response(self) -> None:
-        load_dotenv(dotenv_path=str(object=dot_env_path))
 
-        # you may need to intall the mpv package
-        # brew install mpv
-        # Add ELEVENLABS_API_KEY env var with your elevelabs api key
-        # copy creds.env.example to creds.env and add your api key
+class GenerateVoice:
+    """Generate Voice using ElevenLabs."""
+
+    def __init__(self) -> None:
+        """Initializer."""
+        pass
+
+    def client(self, env_path: Path) -> ElevenLabs | None:
+        """Create an ElevenLabs client.
+
+        Returns:
+            ElevenLabs | None: ElevenLabs client.
+        """
+        load_dotenv(dotenv_path=str(object=env_path))
         api_key: str | None = os.getenv(key="ELEVENLABS_API_KEY")
-
-        # Initiate the ElevenLabs client
         if api_key is None:
             return
-        client: ElevenLabs = ElevenLabs(api_key=api_key)
+        return ElevenLabs(api_key=api_key)
 
+    def generate_voice(self, client: ElevenLabs | None, text: str) -> None:
+        """Generate voice from text.
+
+        Args:
+            client (ElevenLabs | None): ElevenLabs client.
+            text (str): Text to generate voice from.
+        """
         # Generate the audio stream
+        if not client:
+            return
         audio_stream: Iterator[bytes] = client.generate(
-            text=self.response,
+            text=text,
             model=text_to_speech_model,
             stream=True,
         )
@@ -211,16 +300,40 @@ class PDFToSpeech:
         # play the audio stream
         stream(audio_stream=audio_stream)
 
-    def main(self) -> None:
-        self.create_ollama_chat()
-        self.load_pdf_files()
-        self.split_and_chunk()
-        self.apply_metadata_to_documents()
-        self.create_fast_embedding()
-        self.create_rag()
-        self.generate_text_response()
-        self.generate_voice_response()
+
+# Update this with the model you would like to use
+model: str = "CodeLlama:7b"
+embeding_model: str = "nomic-embed-text"
+text_to_speech_model: str = "eleven_turbo_v2"
+
+# Directories and files
+root_dir: Path = find_root_directory(file=__file__)
+pdf_directory: Path = root_dir.joinpath("data/*.pdf")
+vector_db_path: Path = root_dir.joinpath("db/vector_db")
+dot_env_path: Path = root_dir.joinpath("creds.env")
 
 
-pdf_to_speech = PDFToSpeech()
-pdf_to_speech.main()
+def main() -> None:
+    """Main function."""
+    pdf_processor: PDFProcessor = PDFProcessor()
+    pdf_processor.load_pdf_files(directory=pdf_directory)
+    pdf_processor.split_and_chunk()
+    docs: list[Document] = pdf_processor.apply_metadata_to_documents(
+        doc_title="BOI US FinCEN",
+        author="US Business Bureau",
+    )
+    print("Finished processing PDF files.")
+    rag_handler: RAGHandler = RAGHandler()
+    rag_handler.create_ollama_chat(model=model)
+    vector_db: Chroma = rag_handler.create_fast_embedding(docs=docs)
+    text: str = rag_handler.generate_text_response(vector_db=vector_db)
+    print("Generated text response:", text)
+    elevenlabs = GenerateVoice()
+    elevenlabs.generate_voice(
+        client=elevenlabs.client(env_path=dot_env_path),
+        text=text,
+    )
+
+
+if __name__ == "__main__":
+    main()

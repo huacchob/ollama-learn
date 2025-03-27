@@ -333,7 +333,7 @@ def main() -> None:
     )
     text: str = rag_handler.generate_text_response(vector_db=vector_db)
     print("Generated text response:", text)
-    elevenlabs = GenerateVoice()
+    elevenlabs: GenerateVoice = GenerateVoice()
     elevenlabs.create_client(env_path=dot_env_path)
     elevenlabs.generate_voice(text=text, model=text_to_speech_model)
 

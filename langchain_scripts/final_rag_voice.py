@@ -12,7 +12,9 @@ from elevenlabs.client import ElevenLabs
 from langchain.prompts import ChatPromptTemplate, PromptTemplate
 from langchain.retrievers.multi_query import MultiQueryRetriever
 from langchain.schema.runnable import Runnable
-from langchain.text_splitter import RecursiveCharacterTextSplitter as RCSplitter
+from langchain.text_splitter import (
+    RecursiveCharacterTextSplitter as RCSplitter,
+)
 from langchain_chroma import Chroma
 from langchain_community.document_loaders import PDFPlumberLoader
 from langchain_community.embeddings.fastembed import FastEmbedEmbeddings
@@ -194,12 +196,13 @@ class RAGHandler:
         """
         query_prompt: PromptTemplate = PromptTemplate(
             input_variables=["question"],
-            template="""You are an AI language model assistant. Your task is to generate five
-    different versions of the given user question to retrieve relevant documents from
-    a vector database. By generating multiple perspectives on the user question, your
-    goal is to help the user overcome some of the limitations of the distance-based
-    similarity search. Provide these alternative questions separated by newlines.
-    Original question: {question}""",
+            template="""You are an AI language model assistant. Your task is
+            to generate five different versions of the given user question to
+            retrieve relevant documents from a vector database. By generating
+            multiple perspectives on the user question, your goal is to help
+            the user overcome some of the limitations of the distance-based
+            similarity search. Provide these alternative questions separated
+            by newlines.Original question: {question}""",
         )
         # Create a multi-query retriever from the vector retriever
         # and a prompt template
@@ -227,7 +230,7 @@ class RAGHandler:
         Returns:
             str: Generated text response.
         """
-        template: str = """Answer the question based ONLY on the following context:
+        template: str = """Answer the question based ONLY on this context:
         {context}
         Question: {question}
         """
@@ -243,7 +246,7 @@ class RAGHandler:
         output_parser: StrOutputParser = StrOutputParser()
 
         # A chain is meant to run callables in sequence with additional inputs
-        # The first line is a dictionary of inputs mapped to a retriever and a question
+        # The first line is a dictionary of context and passed question
         # The second line is a prompt template
         # The third line is an LLM
         # The fourth line is an output parser

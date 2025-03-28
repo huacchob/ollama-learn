@@ -1,47 +1,67 @@
-Categorize these items into appropriate categories such as Produce, Dairy, Meat, Bakery, Beverages:
-* Produce: Apples, Bananas, Broccoli, Carrots, Garlic, Green Peas, Mushrooms, Onions, Potatoes, Spinach, Tomato
-* Dairy: Cheese, Cream, Eggs, Milk
-* Meat: Chicken Breast, Ground Beef, Shrimp, Sausages
-* Bakery: Bread, Cereal, Oatmeal
-* Beverages: Almond milk, Coffee, Orange Juice, Tea, Water
+Produce:
+• Apples
+• Bananas
+• Broccoli
+• Carrots
+• Celery
+• Cucumber
+• Eggs
+• Garlic
+• Green Beans
+• Kale
+• Lettuce
+• Mushrooms
+• Onions
+• Peas
+• Potatoes
+• Salad Greens
+• Spinach
+• Strawberries
+• Tomatoes
+• Zucchini
 
-Sort the items alphabetically within each category.
-* Produce: Apples, Bananas, Broccoli, Carrots, Garlic, Green Peas, Mushrooms, Onions, Potatoes, Spinach, Tomato
-* Dairy: Cheese, Cream, Eggs, Milk
-* Meat: Chicken Breast, Ground Beef, Shrimp, Sausages
-* Bakery: Bread, Cereal, Oatmeal
-* Beverages: Almond milk, Coffee, Orange Juice, Tea, Water
+Dairy:
+• Cheese
+• Butter
+• Cream
+• Milk
+• Yogurt
 
-Present the categorized list in a clear and organized manner, using bullet points or numbering.
-• Produce
-- Apples
-- Bananas
-- Broccoli
-- Carrots
-- Garlic
-- Green Peas
-- Mushrooms
-- Onions
-- Potatoes
-- Spinach
-- Tomatoes
-• Dairy
-- Cheese
-- Cream
-- Eggs
-- Milk
-• Meat
-- Chicken Breast
-- Ground Beef
-- Shrimp
-- Sausages
-• Bakery
-- Bread
-- Cereal
-- Oatmeal
-• Beverages
-- Almond milk
-- Coffee
-- Orange Juice
-- Tea
-- Water
+Meat/Fish:
+• Beef
+• Chicken
+• Fish (Shrimp, Salmon)
+• Pork
+• Sausages
+
+Bakery:
+• Bread
+• Cereal
+• Granola Bars
+• Oatmeal
+• Oatmeal Bites
+
+Beverages:
+• Coffee
+• Juice (Orange, Grapefruit)
+• Milk
+• Soda
+• Tea
+• Water
+
+Other:
+• Almonds
+• Chocolate
+• Dish Soap
+• Flour
+• Honey
+• Ice Cream
+• Laundry Detergent
+• Olive Oil
+• Peanut Butter
+• Pasta
+• Rice
+• Salt
+• Sugar
+• Toilet Paper
+• Toothpaste

@@ -1,17 +1,27 @@
 import asyncio
 import json
-import os
 import random
+from pathlib import Path
 from typing import Any
 
 from ollama import AsyncClient, ChatResponse
+
+from .utility import find_root_directory
 
 model: str = "CodeLlama:7b"
 
 
 # Load the grocery list from a text file
-def load_grocery_list(file_path: str) -> list[None] | list[str]:
-    if not os.path.exists(path=file_path):
+def load_grocery_list(file_path: Path) -> list[None] | list[str]:
+    """Load the grocery list from a text file.
+
+    Args:
+        file_path (Path): The path to the text file.
+
+    Returns:
+        list[None] | list[str]: The grocery list as a list of strings.
+    """
+    if not file_path.exists():
         print(f"File {file_path} does not exist.")
         return []
     with open(file=file_path, mode="r", encoding="utf-8") as file:
@@ -50,8 +60,10 @@ async def fetch_recipe(category: str) -> dict[str, str | list[str]]:
 
 async def main() -> None:
     # Load grocery list
+    root_dir: Path = find_root_directory(file=__file__)
+    grocery_list_file = root_dir.joinpath("data/grocery_list.txt")
     grocery_items: list[None] | list[str] = load_grocery_list(
-        file_path="./data/grocery_list.txt",
+        file_path=grocery_list_file,
     )
     if not grocery_items:
         print("Grocery list is empty or file not found.")

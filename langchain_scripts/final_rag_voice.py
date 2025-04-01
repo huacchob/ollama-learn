@@ -71,13 +71,13 @@ class PDFProcessor:
             )
             self.text_chunks.extend(chunks)
 
-    def add_metadata(
+    def create_metadata(
         self,
         chunks: list[str],
         doc_title: str,
         author: str,
     ) -> list[dict[str, Union[str, dict[str, str]]]]:
-        """Add metadata to text chunks.
+        """Create metadata for text chunks.
 
         Args:
             chunks (list[str]): Chunks of text to add metadata to.
@@ -113,7 +113,7 @@ class PDFProcessor:
             list[Document]: List of documents with metadata.
         """
         metadata_text_chunks: list[dict[str, Union[str, dict[str, str]]]] = (
-            self.add_metadata(
+            self.create_metadata(
                 chunks=self.text_chunks,
                 doc_title=doc_title,
                 author=author,
